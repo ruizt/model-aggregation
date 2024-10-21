@@ -1,6 +1,7 @@
 library(tidyverse)
 library(R.matlab)
 library(igraph)
+library(xtable)
 
 diatom <- read_csv('data/barron-diatoms.csv') %>%
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -24,10 +25,11 @@ taxon_counts <- diatom %>%
   facet_wrap(~taxon, nrow = 2) +
   geom_path() +
   labs(x = 'Thousands of years before present') +
-  geom_vline(xintercept = 11, color = 'red', linetype = 'dashed')
+  geom_vline(xintercept = 11, color = 'red', linetype = 'dashed') +
+  theme_bw()
   
 ggsave(taxon_counts, filename = 'results/fig-diatom-counts.png',
-       width = 12, height = 6, units = 'cm', dpi = 400, scale = 2)
+       width = 8, height = 5, units = 'cm', dpi = 400, scale = 2)
 
 ## FIGURE: CHANGE IN NETWORK STRUCTURE BEFORE AND AFTER CLIMATE EVENT
 mat_out_post <- readMat('results/diatom-post.mat')
@@ -85,3 +87,57 @@ plot_fn_post(2, '')
 plot_fn_post(3, '')
 
 dev.off()
+
+## TABLES: PARAMETER ESTIMATES
+
+a_post_naive <- mat_out_post$rslts.post[1, 1][[1]][[1]] 
+a_post_bench <- mat_out_post$rslts.post[2, 1][[1]][[1]] 
+a_post <- mat_out_post$rslts.post[3, 1][[1]][[1]] 
+
+a_pre_naive <- mat_out_pre$rslts.pre[1, 1][[1]][[1]] 
+a_pre_bench <- mat_out_pre$rslts.pre[2, 1][[1]][[1]] 
+a_pre <- mat_out_pre$rslts.pre[3, 1][[1]][[1]]
+
+pre_estimates <- expand_grid(Origin = colnames(diatom)[3:10],
+                             Terminus = colnames(diatom)[3:10]) |>
+  bind_cols(Naive = c(mat_out_pre$rslts.pre[1, 1][[1]][[1]]),
+            Benchmark = c(mat_out_pre$rslts.pre[2, 1][[1]][[1]]),
+            Aggregation = c(mat_out_pre$rslts.pre[3, 1][[1]][[1]])) |>
+  filter((Naive != 0) + (Benchmark != 0) + (Aggregation !=0) > 0)
+
+post_estimates <- expand_grid(Origin = colnames(diatom)[3:10],
+                             Terminus = colnames(diatom)[3:10]) |>
+  bind_cols(Naive = c(mat_out_post$rslts.post[1, 1][[1]][[1]]),
+            Benchmark = c(mat_out_post$rslts.post[2, 1][[1]][[1]]),
+            Aggregation = c(mat_out_post$rslts.post[3, 1][[1]][[1]])) |>
+  filter((Naive != 0) + (Benchmark != 0) + (Aggregation !=0) > 0)
+
+fn <- function(x){
+  if(abs(x) < 0.0001){
+    out <- '<0.0001'
+  }else{
+    out <- sprintf("%.4f", x) |> as.character()
+  }
+  return(out)
+}
+
+pre_estimates |>
+  mutate(across(c(Origin, Terminus), ~str_replace(.x, '\\.', ' '))) |>
+  mutate(across(c(Naive, Benchmark, Aggregation), 
+                ~ na_if(.x, 0))) |>
+  mutate(across(c(Naive, Benchmark, Aggregation), 
+                ~if_else(abs(.x) < 0.001, '|a|<0.001', sprintf("%.3f", .x)))) |>
+  xtable() |>
+  print(include.rownames = F, include.colnames = T) |>
+  clipr::write_clip()
+
+
+post_estimates |>
+  mutate(across(c(Origin, Terminus), ~str_replace(.x, '\\.', ' '))) |>
+  mutate(across(c(Naive, Benchmark, Aggregation), 
+                ~ na_if(.x, 0))) |>
+  mutate(across(c(Naive, Benchmark, Aggregation), 
+                ~if_else(abs(.x) < 0.001, '|a|<0.001', sprintf("%.3f", .x)))) |>
+  xtable() |>
+  print(include.rownames = F, include.colnames = T) |>
+  clipr::write_clip()

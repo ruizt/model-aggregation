@@ -277,3 +277,71 @@ ggsave(marginal_effects, filename = 'results/fig-marginal-effects.png',
        height = 8, width = 12, scale = 1.5, units = 'cm', dpi = 400)
 
 
+## SUPPLEMENTAL FIGURE: MSE OF PARAMETER ESTIMATES
+ 
+mse_avg <- plot_df %>%
+  group_by(p, sparsity, 
+           parameter.rep,
+           p.fac, sparsity.fac, 
+           `T`, Method,
+           `Support Estimation`, 
+           `Support Selection`) %>%
+  summarize(fp = mean(fp),
+            fn = mean(fn),
+            compTime = mean(compTime),
+            mse = mean((p^2)*mse))
+
+# mse against t
+mse_fig <- plot_df %>%
+  na.omit() %>%
+  group_by(p, sparsity, 
+           p.fac, sparsity.fac, 
+           `T`, Method,
+           `Support Estimation`, 
+           `Support Selection`) %>%
+  summarize(fp = mean(fp),
+            fn = mean(fn),
+            compTime = mean(compTime),
+            mse = mean((p^2)*mse)) %>%
+  ggplot(aes(x = `T`, 
+             y = mse,
+             color = `Support Selection`,
+             linetype = `Support Estimation`)) +
+  geom_path() +
+  geom_path(data = mse_avg, alpha = 0.1) +
+  facet_wrap(~sparsity.fac*p.fac) +
+  theme_bw() +
+  scale_y_log10() +
+  labs(y = expression(paste("Average  ", 
+                            group("|", group("|", A - hat(A), "|"), "|")['F']))) +
+  scale_color_manual(values = c('red', 'blue'))
+
+ggsave(mse_fig, filename = 'results/sfig-mse.png', 
+       height = 8, width = 15, scale = 1.5, units = 'cm', dpi = 400)
+
+## SUPPLEMENTAL FIGURE: COMPUTATION TIMES OBSERVED IN SIMULATION
+
+comp_fig <- plot_df %>%
+  group_by(p, sparsity, 
+           p.fac, sparsity.fac, 
+           `T`, Method,
+           `Support Selection`, 
+           `Support Estimation`) %>%
+  summarize(fp = mean(fp),
+            fn = mean(fn),
+            compTime = mean(compTime),
+            mse = mean((p^2)*mse)) %>%
+  ggplot(aes(x = `T`, 
+             y = compTime,
+             linetype = `Support Estimation`,
+             color = `Support Selection`)) +
+  geom_path() +
+  facet_wrap(~sparsity.fac*p.fac) +
+  theme_bw() +
+  scale_y_log10() +
+  labs(y = "Average compute time (sec)") +
+  scale_color_manual(values = c('red', 'blue')) +
+  guides(color = guide_legend(), linetype = guide_legend())
+
+ggsave(comp_fig, filename = 'results/sfig-comp.png', 
+       height = 8, width = 15, scale = 1.5, units = 'cm', dpi = 400)
