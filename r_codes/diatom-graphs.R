@@ -23,13 +23,16 @@ taxon_counts <- diatom %>%
                names_to = 'taxon', values_to = 'Count') %>%
   ggplot(aes(x = Age, y = Count)) +
   facet_wrap(~taxon, nrow = 2) +
-  geom_path() +
+  geom_path(linewidth = 0.25) +
   labs(x = 'Thousands of years before present') +
-  geom_vline(xintercept = 11, color = 'red', linetype = 'dashed') +
-  theme_bw()
+  geom_vline(xintercept = 11, color = 'red', linetype = 'dashed',
+             linewidth = 0.2) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1))
   
 ggsave(taxon_counts, filename = 'results/fig-diatom-counts.png',
-       width = 8, height = 5, units = 'cm', dpi = 400, scale = 2)
+       width = 6, height = 4, units = 'in', dpi = 400)
 
 ## FIGURE: CHANGE IN NETWORK STRUCTURE BEFORE AND AFTER CLIMATE EVENT
 mat_out_post <- readMat('results/diatom-post.mat')
@@ -73,7 +76,7 @@ plot_fn_pre <- function(ix, lbl){
 
 
 png(filename = 'results/fig-diatom-graphs.png', 
-    width = 20, height = 10, units = 'cm', res = 400)
+    width = 9, height = 5, units = 'in', res = 400)
 
 par(mar = c(2, 2, 2, 2), mfrow = c(2, 3)) 
 

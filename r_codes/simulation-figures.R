@@ -1,5 +1,6 @@
 library(tidyverse)
 library(R.matlab)
+library(patchwork)
 options(stringsAsFactors = F)
 mat_dir <- "results/simulation_results"
 
@@ -75,26 +76,26 @@ plot_df <- merge(fp,
 
 ## FIGURE: AVERAGE SELECTION ERRORS
 
-# version 1
-plot_df %>%
-  group_by(p, sparsity, 
-           p.fac, sparsity.fac, 
-           `T`, Method,
-           `Support Estimation`, 
-           `Support Selection`) %>%
-  summarize(fp = mean(fp),
-            fn = mean(fn),
-            compTime = mean(compTime),
-            mse = mean(mse)) %>%
-ggplot(aes(x = `T`, 
-           y = (fn + fp)/round(p^2*sparsity),
-           color = `Support Selection`,
-           linetype = `Support Estimation`)) +
-  geom_path() +
-  facet_wrap(~sparsity.fac*p.fac) +
-  theme_bw() +
-  labs(y = expression(paste("Average  ", frac(FP + FN, sM^2)))) +
-  scale_color_manual(values = c('red', 'blue'))
+# # version 1
+# plot_df %>%
+#   group_by(p, sparsity, 
+#            p.fac, sparsity.fac, 
+#            `T`, Method,
+#            `Support Estimation`, 
+#            `Support Selection`) %>%
+#   summarize(fp = mean(fp),
+#             fn = mean(fn),
+#             compTime = mean(compTime),
+#             mse = mean(mse)) %>%
+# ggplot(aes(x = `T`, 
+#            y = (fn + fp)/round(p^2*sparsity),
+#            color = `Support Selection`,
+#            linetype = `Support Estimation`)) +
+#   geom_path() +
+#   facet_wrap(~sparsity.fac*p.fac) +
+#   theme_bw() +
+#   labs(y = expression(paste("Average  ", frac(FP + FN, sM^2)))) +
+#   scale_color_manual(values = c('red', 'blue'))
 
 
 # version 2
@@ -112,16 +113,20 @@ selection_errors <- plot_df %>%
              y = (fn + fp)/(p^2),
              color = `Support Selection`,
              linetype = `Support Estimation`)) +
-  geom_path() +
-  geom_point() +
+  geom_path(linewidth = 0.3) +
+  geom_point(alpha = 0.75, aes(shape = `Support Selection`)) +
   facet_wrap(~sparsity.fac*p.fac) +
   theme_bw() +
-  labs(y = expression(paste("Average  ", frac(FP + FN, M^2)))) +
-  scale_color_manual(values = c('red', 'blue'))
+  labs(y = expression(paste("Average  ", frac(FP + FN, M^2))),
+       x = 'Series length (T)') +
+  scale_color_manual(values = c('red', 'blue')) +
+  theme(panel.grid.major = element_line(color = 'black', linewidth = 0.1),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90))
 
 # save
 ggsave(selection_errors, filename = 'results/fig-selection-errors.png', 
-       height = 8, width = 15, scale = 1.5, units = 'cm', dpi = 400)
+       height = 5, width = 6, scale = 1, units = 'in', dpi = 400)
 
 ## FIGURE: FALSE POSITIVE AND FALSE NEGATIVE RATES
 
@@ -140,14 +145,19 @@ panel_fn <- plot_df %>%
              y = fn/(p^2),
              color = `Support Selection`,
              linetype = `Support Estimation`)) +
-  geom_path() +
+  geom_path(linewidth = 0.3) +
+  geom_point(alpha = 0.75, aes(shape = `Support Selection`)) +
   facet_wrap(~sparsity.fac*p.fac) +
   theme_bw() +
-  labs(y = "Average FN rate",
-       title = 'False negatives') +
+  scale_y_continuous(n.breaks = 4) +
+  labs(y = expression(paste("Average ", frac(FN, M^2))),
+       title = 'False negatives',
+       x = 'Series length (T)') +
   scale_color_manual(values = c('red', 'blue')) +
-  guides(color = guide_none(), linetype = guide_none())  +
-  theme(axis.text.x = element_text(angle = 90))
+  guides(color = guide_none(), linetype = guide_none(), shape = guide_none())  +
+  theme(axis.text.x = element_text(angle = 90),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1))
 
 # right panel  (legend)
 panel_fp <- plot_df %>%
@@ -164,21 +174,25 @@ panel_fp <- plot_df %>%
              y = fp/(p^2),
              color = `Support Selection`,
              linetype = `Support Estimation`)) +
-  geom_path() +
+  geom_path(linewidth = 0.3) +
+  geom_point(alpha = 0.75, aes(shape = `Support Selection`)) +
   facet_wrap(~sparsity.fac*p.fac) +
   theme_bw() +
-  labs(y = "Average FP rate",
-       title = 'False positives') +
+  labs(y = expression(paste("Average ", frac(FP, M^2))),
+       title = 'False positives',
+       x = 'Series length (T)') +
   scale_color_manual(values = c('red', 'blue')) +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1))
 
 # combine panels
-fpfn_rates <- grid.arrange(panel_fn, panel_fp, 
-             layout_matrix = matrix(c(1, 1, 2, 2, 2), nrow = 1))
+fpfn_rates <- panel_fn + panel_fp + 
+  plot_layout(ncol = 2, nrow = 1, widths = c(1, 1))
 
 # save
 ggsave(fpfn_rates, filename = 'results/fig-fpfn-rates.png', 
-       height = 8, width = 16, scale = 1.5, units = 'cm', dpi = 400)
+       height = 5, width = 8.5, scale = 1, units = 'in', dpi = 400)
 
 
 ## FIGURE: MARGINAL EFFECTS OF ALGORITHM FEATURES
@@ -211,19 +225,23 @@ support_panel <- margin1_plot_df %>%
                                labels = c('s = 0.01', 's = 0.02', 's = 0.05'))) %>%
   ggplot(aes(x = fpfn.lasso/(p^2),
              y = fpfn.aggr/(p^2))) +
-  geom_jitter(alpha = 0.5,
+  geom_jitter(alpha = 0.1,
               width = 0.002,
               height = 0.002) +
   facet_wrap(~sparsity.fac*p.fac) +
   geom_abline(slope = 1,
-              intercept = 0) +
+              intercept = 0,
+              linewidth = 0.25) +
   geom_smooth(method = 'lm', se = F, 
-              color = 'red', lty = 2, size = 0.5) +
+              color = 'red', lty = 2,
+              linewidth = 0.4) +
   theme_bw() +
   coord_fixed(ratio = 1) +
   labs(x = expression(paste(frac(FP + FN, M^2), '  for lasso support methods')),
        y = expression(paste(frac(FP + FN, M^2), '  for support aggregation methods'))) +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1))
 
 
 # effect of model selection vs. aggregation (right panel)
@@ -254,27 +272,31 @@ model_panel <- margin2_plot_df %>%
                                labels = c('s = 0.01', 's = 0.02', 's = 0.05'))) %>%
   ggplot(aes(x = fpfn.cv/(p^2),
              y = fpfn.aggr/(p^2))) +
-  geom_jitter(alpha = 0.5,
+  geom_jitter(alpha = 0.1,
               width = 0.002,
               height = 0.002) +
   facet_wrap(~sparsity.fac*p.fac) +
   geom_abline(slope = 1,
-              intercept = 0) +
+              intercept = 0,
+              linewidth = 0.25) +
   geom_smooth(method = 'lm', se = F, 
-              color = 'red', lty = 2, size = 0.5) +
+              color = 'red', lty = 2, 
+              linewidth = 0.4) +
   theme_bw() +
   coord_fixed(ratio = 1) +
   labs(x = expression(paste(frac(FP + FN, M^2), '  for cross validation methods')),
        y = expression(paste(frac(FP + FN, M^2), '  for model aggregation methods'))) +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1))
 
 # combine panels
-marginal_effects <- grid.arrange(support_panel, model_panel, 
-             layout_matrix = matrix(c(1, 2), nrow = 1))
+marginal_effects <- support_panel + model_panel + 
+  plot_layout(ncol = 2, widths = c(1, 1))
 
 # save
 ggsave(marginal_effects, filename = 'results/fig-marginal-effects.png', 
-       height = 8, width = 12, scale = 1.5, units = 'cm', dpi = 400)
+       height = 5, width = 8, scale = 1, units = 'in', dpi = 400)
 
 
 ## SUPPLEMENTAL FIGURE: MSE OF PARAMETER ESTIMATES
@@ -307,17 +329,21 @@ mse_fig <- plot_df %>%
              y = mse,
              color = `Support Selection`,
              linetype = `Support Estimation`)) +
-  geom_path() +
-  geom_path(data = mse_avg, alpha = 0.1) +
+  geom_path(linewidth = 0.5) +
+  geom_path(data = mse_avg, alpha = 0.1, linewidth = 0.3) +
   facet_wrap(~sparsity.fac*p.fac) +
   theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1),
+        axis.text.x = element_text(angle = 90)) +
   scale_y_log10() +
   labs(y = expression(paste("Average  ", 
-                            group("|", group("|", A - hat(A), "|"), "|")['F']))) +
+                            group("|", group("|", A - hat(A), "|"), "|")['F'])),
+       x = 'Series length (T)') +
   scale_color_manual(values = c('red', 'blue'))
 
 ggsave(mse_fig, filename = 'results/sfig-mse.png', 
-       height = 8, width = 15, scale = 1.5, units = 'cm', dpi = 400)
+       height = 4, width = 5, scale = 1.1, units = 'in', dpi = 400)
 
 ## SUPPLEMENTAL FIGURE: COMPUTATION TIMES OBSERVED IN SIMULATION
 
@@ -339,9 +365,13 @@ comp_fig <- plot_df %>%
   facet_wrap(~sparsity.fac*p.fac) +
   theme_bw() +
   scale_y_log10() +
-  labs(y = "Average compute time (sec)") +
+  labs(y = "Average compute time (sec)",
+       x = 'Series length (T)') +
   scale_color_manual(values = c('red', 'blue')) +
-  guides(color = guide_legend(), linetype = guide_legend())
+  guides(color = guide_legend(), linetype = guide_legend()) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = 'black', linewidth = 0.1),
+        axis.text.x = element_text(angle = 90))
 
 ggsave(comp_fig, filename = 'results/sfig-comp.png', 
-       height = 8, width = 15, scale = 1.5, units = 'cm', dpi = 400)
+       height = 4, width = 5, scale = 1.1, units = 'in', dpi = 400)
