@@ -26,6 +26,6 @@ All codes were written by T.D. Ruiz.
 
 2.  `r_codes` contains codes for the data visualizations and tables appearing in the paper, and data processing for the application
 
-3.  `data` contains a copy of the diatom data from Barron *et al.* (2005) [[doi:10.25921/smet-t047](https://doi.org/10.25921/smet-t047){.uri}]
+3.  `data` contains a copy of the diatom data from Barron *et al.* (2005) [[doi:10.25921/smet-t047](https://doi.org/10.25921/smet-t047)]
 
 4.  `results` contains image files for manuscript figures and `.mat` files containing simulation and data analysis results
