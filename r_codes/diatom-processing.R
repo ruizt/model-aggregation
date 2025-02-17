@@ -14,4 +14,4 @@ diatom_pre <- diatom %>%
   arrange(Age) %>%
   select(-Depth, -Age, -Num.counted)
 
-writeMat('matlab_codes/diatom.mat', pre = diatom_pre, post = diatom_post)
+writeMat('data/diatom.mat', pre = diatom_pre, post = diatom_post)

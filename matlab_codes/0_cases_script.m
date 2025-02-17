@@ -40,7 +40,7 @@ dist = 1; % response distribution flag (1 for poisson, 2 for gaussian)
 % global method settings
 nSamp = 10; % number of subsamples to use in model selection or aggregation
 subSampMethod = 1; % method of subsampling; see subsample.m for details
-nSampSuppEst = 8; # number of subsamples to use in support aggregation, if applicable
+nSampSuppEst = 8; % number of subsamples to use in support aggregation, if applicable
 
 % benchmark method
 fixSupportEstimates = 0;
