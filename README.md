@@ -1,6 +1,8 @@
 ## Citation
 
-T.D. Ruiz, S. Bhattacharyya, S.C. Emerson (2025). Sparse estimation of parameter support sets for generalized vector autoregressions by resampling and model aggregation. Forthcoming in *Journal of Statistical Computation and Simulation.*
+T.D. Ruiz, S. Bhattacharyya, S.C. Emerson (2025). Sparse estimation of parameter support sets for generalized vector autoregressions by resampling and model aggregation. *Journal of Statistical Computation and Simulation.*
+
+\[[paper](https://doi.org/10.1080/00949655.2025.2469905)\] \[[preprint](https://doi.org/10.48550/arXiv.2307.09684)\]
 
 ## Contents
 
